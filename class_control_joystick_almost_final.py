@@ -65,18 +65,35 @@ class race_track:
 
         self.time_circle_robot_1 = 0
         self.time_circle_robot_2 = 0
-        self.player_2 = False
-        self.player_1 = False
         self.print_GO = False
         self.protect_for_b = True
         self.press_b_phrase = True
+
         self.robot_1_second_circle = None
         self.robot_1_first_circle = None
         self.robot_2_second_circle = None
         self.robot_2_first_circle = None
         self.final_time = None
         self.final_time_2 = None
+        self.print_winner_1 = False
+        self.print_winner_2 = False
         self.d_highscore = {}
+        self.name = ""
+        self.name_highscore_1 = None
+        self.name_highscore_2 = None
+        self.vanishing_TAB_phrase_1 = False
+        self.vanishing_TAB_phrase_2 = False
+        self.player_1 = False
+        self.player_2 = False
+        self.protect_for_dictionary = False
+        self.protect_for_dictionary_2 = False
+        self.name_winner = False
+        self.name_loser = False
+        self.last_result_print = False
+        self.protect_restart = False
+        self.protect_top10 = False
+        self.name_player_print = False
+
 
     def measurement_callback(self, data):
         # Aruco marker number 14 it's robot 102; Aruco 1,5,7,8 are drawn small rectangle Polygon
@@ -94,7 +111,6 @@ class race_track:
         elif data.id == 0:
             self.start_line = (data.x, data.y)
             # print ("{}->ID MARKER, {}->POSITION".format(data.id, self.start_line))
-
         elif data.id == 1:
             self.rectangle_pos = (data.x, data.y)
             # print ("{}->ID MARKER, {}->POSITION".format(data.id, self.rectangle_pos))
@@ -214,6 +230,7 @@ class race_track:
                 else:
                     print("put the BMW X6 on the start line")
                     self.robot_2.controlling_allowed_2 = False
+
     def start_countdown(self):
         if self.countdown and self.countdown_2:
             self.count_down_start = time.time()
@@ -272,17 +289,25 @@ class race_track:
             self.print_robot_2_time = False
 
     def print_result(self):
+        if self.final_time and self.final_time_2 is not None:
+            self.print_winner_1 = False
+            self.print_winner_2 = False
+            self.vanishing_TAB_phrase_1 = True
+            self.vanishing_TAB_phrase_2 = True
+
         if not self.final_time is None:
-            final_time_robot_1_font = pygame.font.Font(None, 36)
-            final_time_robot_1 = "FINAL TIME MLS  {: 6.2f}".format(self.final_time)
-            text = final_time_robot_1_font.render(final_time_robot_1, True, (0, 255, 0))
-            screen.blit(text, [30, 300])
+            if self.print_winner_1:
+                final_time_robot_1_font = pygame.font.Font(None, 36)
+                final_time_robot_1 = "FINAL TIME MLS  {: 6.2f}".format(self.final_time)
+                text = final_time_robot_1_font.render(final_time_robot_1, True, (0, 255, 0))
+                screen.blit(text, [30, 300])
 
         if not self.robot_1_second_circle is None:
             second_circle_robot_1_font = pygame.font.Font(None, 32)
             second_circle_robot_1 = "SECOND LAP  {: 6.2f}".format(self.robot_1_second_circle)
             text = second_circle_robot_1_font.render(second_circle_robot_1, True, (255, 0, 0))
             screen.blit(text, [30, 200])
+
 
         if not self.robot_1_first_circle is None:
             first_circle_robot_1_font = pygame.font.Font(None, 32)
@@ -291,11 +316,11 @@ class race_track:
             screen.blit(text, [30, 150])
 
         if not self.final_time_2 is None:
-            final_time_robot_2_font = pygame.font.Font(None, 36)
-            final_time_robot_2 = "FINAL TIME BMW X6  {: 6.2f}".format(self.final_time_2)
-            text = final_time_robot_2_font.render(final_time_robot_2, True, (0, 255, 0))
-            screen.blit(text, [380, 300])
-
+            if self.print_winner_2:
+                final_time_robot_2_font = pygame.font.Font(None, 36)
+                final_time_robot_2 = "FINAL TIME BMW X6  {: 6.2f}".format(self.final_time_2)
+                text = final_time_robot_2_font.render(final_time_robot_2, True, (0, 255, 0))
+                screen.blit(text, [380, 300])
         if not self.robot_2_second_circle is None:
             second_circle_robot_2_font = pygame.font.Font(None, 32)
             second_circle_robot_2 = "SECOND LAP  {: 6.2f}".format(self.robot_2_second_circle)
@@ -343,70 +368,186 @@ class race_track:
                 if self.finish_line_count < self.checkpoint_count:
                     self.finish_line_count += 1
 
-                elif self.finish_line_count == self.checkpoint_count and self.finish_line_count == 3:
+                elif self.finish_line_count == self.checkpoint_count and self.finish_line_count == 1:
                     if self.final_time is None:
                         self.final_time = time.time() - self.time_circle_robot_1
                     self.robot_1.controlling_allowed = False
-                    self.player_1 = True
+                    self.print_winner_1 = True
+                    self.robot_1.controlling_keyboard = False
 
-                elif self.finish_line_count == self.checkpoint_count and self.finish_line_count == 2:
-                    if self.robot_1_second_circle is None:
-                        self.robot_1_second_circle = time.time() - self.time_circle_robot_1
 
-                elif self.finish_line_count == self.checkpoint_count and self.finish_line_count == 1:
-                    if self.robot_1_first_circle is None:
-                        self.robot_1_first_circle = time.time() - self.time_circle_robot_1
-                    self.player_1 = True
+
+                # elif self.finish_line_count == self.checkpoint_count and self.finish_line_count == 2:
+                #     if self.robot_1_second_circle is None:
+                #         self.robot_1_second_circle = time.time() - self.time_circle_robot_1
+                #
+                # elif self.finish_line_count == self.checkpoint_count and self.finish_line_count == 1:
+                #     if self.robot_1_first_circle is None:
+                #         self.robot_1_first_circle = time.time() - self.time_circle_robot_1
+
             if self.start_strength_line.contains(self.robot_pos_2_point):
                 if self.finish_line_count_2 < self.checkpoint_count_2:
                     self.finish_line_count_2 += 1
                     print("Player 2 reached finish line, finish line count = {}".format(self.finish_line_count_2))
 
-                elif self.finish_line_count_2 == self.checkpoint_count_2 and self.finish_line_count_2 == 3:
+                elif self.finish_line_count_2 == self.checkpoint_count_2 and self.finish_line_count_2 == 1:
                     if self.final_time_2 is None:
                         self.final_time_2 = time.time() - self.time_circle_robot_2
                     self.robot_2.controlling_allowed = False
-                    self.player_2 = True
+                    self.print_winner_2 = True
+                    self.robot_2.controlling_keyboard = False
 
-                elif self.finish_line_count_2 == self.checkpoint_count_2 and self.finish_line_count_2 == 2:
-                    if self.robot_2_second_circle is None:
-                        self.robot_2_second_circle = time.time() - self.time_circle_robot_2
+                # elif self.finish_line_count_2 == self.checkpoint_count_2 and self.finish_line_count_2 == 2:
+                #     if self.robot_2_second_circle is None:
+                #         self.robot_2_second_circle = time.time() - self.time_circle_robot_2
+                #
+                # elif self.finish_line_count_2 == self.checkpoint_count_2 and self.finish_line_count_2 == 1:
+                #     if self.robot_2_first_circle is None:
+                #         self.robot_2_first_circle = time.time() - self.time_circle_robot_2
 
-                elif self.finish_line_count_2 == self.checkpoint_count_2 and self.finish_line_count_2 == 1:
-                    if self.robot_2_first_circle is None:
-                        self.robot_2_first_circle = time.time() - self.time_circle_robot_2
-                    self.player_2 = True
 
-    def restart(self, loop):
-        if pressed[pygame.K_SPACE]:
-            if self.player_2 and self.player_1:
-                loop = False
-            else:
-                print("Both robots should finished the race")
+    def restart(self):
+        if self.protect_restart:
+            self.robot_1.controlling_keyboard = True
+            self.robot_2.controlling_keyboard = True
+            loop = False
+            return loop
+        return True
 
-    def highscore_read(self):
-        content = ""
-        with open("highscore.txt", 'r') as time:
-            content = time.read()
-        time = content.split(',')
-        for names in time:
-            I = names.split(":")
-            self.d_highscore[I[0]] = [I[1]]
-        return self.d_highscore
+    def print_winner(self):
+        if self.final_time and self.final_time_2 is not None:
+            if self.vanishing_TAB_phrase_1 and self.vanishing_TAB_phrase_2:
+                robot_font_2 = pygame.freetype.SysFont(None, 30)
+                robot_font = pygame.freetype.SysFont(None, 46)
+                if self.final_time < self.final_time_2:
+                    robot_font.render_to(screen, (180, 180), "MLS winner!", (255, 160, 30))
+                elif self.final_time > self.final_time_2:
+                    robot_font.render_to(screen, (200, 180), "BMW X6 winner!", (255, 160, 30))
+
+                robot_font_2.render_to(screen, (140, 300), "Who were drivers? ", (255, 160, 30))
+                robot_font_2.render_to(screen, (100, 350), "Press TAB and record your name", (255, 160, 30))
+            if pressed[pygame.K_TAB]:
+                self.player_1 = True
+                self.name_player_print = True
+                self.name_winner = True
+
+
+    def player_name(self, event):
+        if self.player_1:
+            winner = min(self.final_time, self.final_time_2)
+            loser = max(self.final_time, self.final_time_2)
+            if event.type == pygame.KEYDOWN:
+                if event.unicode.isalpha():
+                    if len(self.name) < 10:
+                        if event.unicode == 10:
+                            self.name += 0
+                        else:
+                            self.name += event.unicode
+                elif event.key == pygame.K_BACKSPACE:
+                    self.name = self.name[:-1]
+                elif event.key == pygame.K_RETURN:
+
+                    if len(self.d_highscore.keys()) == 1:
+                        self.d_highscore[self.name] = loser
+                        self.protect_for_dictionary_2 = True
+                        self.name_loser = False
+                        self.name = ""
+                        self.last_result_print = True
+                        self.player_2 = False
+                        self.player_1 = False
+
+                    if len(self.d_highscore.keys()) < 1:
+                        self.name_winner = False
+                        self.name_loser = True
+
+                        self.d_highscore[self.name] = winner
+                        self.protect_for_dictionary = True
+                        self.name = ""
+
+                self.player_2 = True
+    def player_name_print_font(self):
+        font = pygame.font.SysFont(None, 36)
+        if self.player_2:
+            block = font.render(self.name, True, (255, 255, 255))
+            rect = block.get_rect()
+            rect.center = screen.get_rect().center
+            screen.blit(block, rect)
+    def player_name_print(self):
+        if self.name_player_print:
+            self.vanishing_TAB_phrase_1 = False
+            self.vanishing_TAB_phrase_2 = False
+            font_2 = pygame.freetype.SysFont(None, 30)
+
+            if self.name_winner:
+                font_2.render_to(screen, (240, 190), "Winner's name: ", (255, 160, 30))
+            if self.name_loser:
+                font_2.render_to(screen, (240, 190), "Loser's name: ", (255, 160, 30))
+            if self.last_result_print:
+                dict_1 = self.d_highscore
+                font_2.render_to(screen, (50, 60), "{}:{:5.2f}".format(dict_1.keys()[0],dict_1.values()[0]),
+                                 (255, 160, 30))
+
+                font_2.render_to(screen, (50, 90), "{}:{:5.2f}".format(dict_1.keys()[1], dict_1.values()[1]),
+                                 (255, 160, 30))
+
+                font_2.render_to(screen, (70, 220), "Press TAB for views TOP 10 HOT", (255, 160, 30))
+                font_2.render_to(screen, (70, 270), "Press SPACE for restart the RACE", (255, 160, 30))
+                if pressed[pygame.K_SPACE]:
+                    self.protect_restart = True
+                if pressed[pygame.K_TAB]:
+                    self.protect_top10 = True
     def highscore_write(self):
-        f = open("highscore", 'w')
-        to_write = ""
-        for name in ('high', 'mid', 'low'):
-            to_write += name
-            to_write += ':'
-            to_write += str(self.final_time.get(name)[0])
-            to_write += ':'
-            to_write += str(self.final_time.get(name)[1])
-            to_write += ','
-        print(to_write)
-        to_write = to_write[:-1]
-        f.write(to_write)
-        f.close()
+        if self.final_time_2 and self.final_time is not None:
+            if self.protect_for_dictionary and self.protect_for_dictionary_2:
+                with open("highscore.txt", "a") as inp:
+                    for T, I in self.d_highscore.items():
+                        inp.write("{}:{:5.2f}\n".format(T,I))
+                inp.close()
+                self.protect_for_dictionary = False
+
+
+    def top_10_list(self):
+        if self.protect_top10:
+                self.last_result_print = False
+                bx = 480
+                by = 400
+                WHITE = (255, 255, 255)
+                GREY = (200, 200, 200)
+                BLACK = (0, 0, 0)
+                font = pygame.font.SysFont(None, 32)
+                file = open("highscore.txt", 'r')
+                lines = file.readlines()
+                all_score = []
+                for line in lines:
+                    sep = line.index(':')
+                    name = line[:sep]
+                    score = line[sep + 1:-1]
+                    all_score.append((score, name))
+                file.close()
+                all_score.sort(reverse=False)  # sort from smallest to largest
+                best = all_score[:10]  # top 10 values
+                # make the presentation box
+                box = pygame.Surface((bx, by))
+                box.fill(GREY)
+                pygame.draw.rect(box, WHITE, (50, 12, bx - 100, 35), 0)
+                pygame.draw.rect(box, WHITE, (50, by - 60, bx - 100, 42), 0)
+                pygame.draw.rect(box, BLACK, (0, 0, bx, by), 1)
+                txt_surf = font.render("HIGHSCORE", True, BLACK)  # headline
+                txt_rect = txt_surf.get_rect(center=(bx // 2, 30))
+                box.blit(txt_surf, txt_rect)
+                txt_surf = font.render("Press ESC to continue", True, BLACK)  # bottom line
+                txt_rect = txt_surf.get_rect(center=(bx // 2, 360))
+                box.blit(txt_surf, txt_rect)
+                for entry, i in enumerate(best):
+                    txt_surf = font.render(i[1] + "  " + str(i[0]), True, BLACK)
+                    txt_rect = txt_surf.get_rect(center=(bx // 2, 30 * entry + 60))
+                    box.blit(txt_surf, txt_rect)
+                    screen.blit(box, (0, 0))
+                if pressed[pygame.K_ESCAPE]:
+                    self.protect_top10 = False
+                    self.last_result_print = True
+                self.name_winner = False
+
 
 class robot:  # we have 4 arg for this class, because joysticks get the same (value, axis) events
 
@@ -421,6 +562,8 @@ class robot:  # we have 4 arg for this class, because joysticks get the same (va
 
         self.controlling_allowed = True
         self.controlling_allowed_2 = False
+        self.controlling_keyboard = True
+
         self.u1 = 0
         self.u2 = 0
         try:
@@ -509,69 +652,69 @@ class robot:  # we have 4 arg for this class, because joysticks get the same (va
 
         u1_old = deepcopy(self.u1)
         u2_old = deepcopy(self.u2)
+        if self.controlling_keyboard:
+            if pressed[pygame.K_LEFT]:
+                self.u1 = -1.0
+                self.u2 = 1.0
+                #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
 
-        if pressed[pygame.K_LEFT]:
-            self.u1 = -1.0
-            self.u2 = 1.0
-            #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
+            elif pressed[pygame.K_RIGHT]:
+                self.u1 = 1.0
+                self.u2 = -1.0
+                #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
 
-        elif pressed[pygame.K_RIGHT]:
-            self.u1 = 1.0
-            self.u2 = -1.0
-            #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
+            elif pressed[pygame.K_UP]:
+                self.u1 = 1.0
+                self.u2 = 1.0
+                #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
 
-        elif pressed[pygame.K_UP]:
-            self.u1 = 1.0
-            self.u2 = 1.0
-            #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
+            elif pressed[pygame.K_DOWN]:
+                self.u1 = -1.0
+                self.u2 = -1.0
+                #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
 
-        elif pressed[pygame.K_DOWN]:
-            self.u1 = -1.0
-            self.u2 = -1.0
-            #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
+            elif event.type == pygame.KEYUP:
+                self.u1 = 0.0
+                self.u2 = 0.0
+                #selfd.rc_socket.send('({},{})\n'.format(self.u1, self.u2).encode())
 
-        elif event.type == pygame.KEYUP:
-            self.u1 = 0.0
-            self.u2 = 0.0
-            #selfd.rc_socket.send('({},{})\n'.format(self.u1, self.u2).encode())
-
-        if u1_old != self.u1 or u2_old != self.u2:
-            print("update_control = True")
-            self.update_control = True
+            if u1_old != self.u1 or u2_old != self.u2:
+                print("update_control = True")
+                self.update_control = True
 
     def control_keyboard_2(self, event):  # keyboard control for robot2
 
         u1_old = deepcopy(self.u1)
         u2_old = deepcopy(self.u2)
+        if self.controlling_keyboard:
+            if pressed[pygame.K_a]:
+                self.u1 = -1.0
+                self.u2 = 1.0
+                #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
 
-        if pressed[pygame.K_a]:
-            self.u1 = -1.0
-            self.u2 = 1.0
-            #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
+            elif pressed[pygame.K_d]:
+                self.u1 = 1.0
+                self.u2 = -1.0
+                #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
 
-        elif pressed[pygame.K_d]:
-            self.u1 = 1.0
-            self.u2 = -1.0
-            #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
+            elif pressed[pygame.K_w]:
+                self.u1 = 1.0
+                self.u2 = 1.0
+                #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
 
-        elif pressed[pygame.K_w]:
-            self.u1 = 1.0
-            self.u2 = 1.0
-            #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
+            elif pressed[pygame.K_s]:
+                self.u1 = -1.0
+                self.u2 = -1.0
+                #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
 
-        elif pressed[pygame.K_s]:
-            self.u1 = -1.0
-            self.u2 = -1.0
-            #self.rc_socket.send('({},{})\n'.format(u1, u2).encode())
+            elif event.type == pygame.KEYUP:
+                self.u1 = 0.0
+                self.u2 = 0.0
+                #self.rc_socket.send('({},{})\n'.format(self.u1, self.u2).encode())
 
-        elif event.type == pygame.KEYUP:
-            self.u1 = 0.0
-            self.u2 = 0.0
-            #self.rc_socket.send('({},{})\n'.format(self.u1, self.u2).encode())
-
-        if u1_old != self.u1 or u2_old != self.u2:
-            print("update_control = True")
-            self.update_control = True
+            if u1_old != self.u1 or u2_old != self.u2:
+                print("update_control = True")
+                self.update_control = True
 
 
 def main():
@@ -583,13 +726,12 @@ def main():
     robot_1.joystick_init()
     robot_2 = robot(1, '192.168.1.101', 1234)
     robot_2.joystick_init()
-    loop = True
 
     while True:
+
         robot_track = race_track(robot_1, robot_2)
-        robot_track.highscore_read()
-        robot_track.highscore_write()
-        time.sleep(1.0)
+        loop = True
+        time.sleep(0.5)
         while loop:
             robot_track.check_number_marker()
             robot_track.polygon_rectangle()
@@ -599,12 +741,12 @@ def main():
             robot_2.check_control()
 
             robot_track.check_countdown()
-
             screen.fill((0, 0, 0))
+
             events = pygame.event.get()
             global pressed
             pressed = pygame.key.get_pressed()
-            robot_track.restart(loop)
+            loop = robot_track.restart()
             robot_1.update_control = False
             robot_2.update_control = False
             input_1_recorded = False
@@ -623,19 +765,30 @@ def main():
                         input_1_recorded = True
 
                 else:
+
+                    robot_track.player_name(event)
+
                     robot_1.control_keyboard(event)
                     robot_2.control_keyboard_2(event)
                     input_1_recorded = True
                     input_2_recorded = True
+
+
             if input_2_recorded:
                 robot_2.send_control()
             if input_1_recorded:
                 robot_1.send_control()
+
+            robot_track.player_name_print_font()
+            robot_track.highscore_write()
+            robot_track.print_winner()
+            robot_track.print_result()
+            robot_track.top_10_list()
+            robot_track.player_name_print()
             robot_track.time_robot_1_2()
             robot_track.print_countdown()
             robot_track.print_time_robot_1_2()
             robot_track.first_phrase()
-            robot_track.print_result()
             pygame.display.flip()
 
 
